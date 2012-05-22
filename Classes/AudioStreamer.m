@@ -867,7 +867,7 @@ cleanup:
 		pthread_cond_destroy(&queueBufferReadyCondition);
 
 #if TARGET_OS_IPHONE			
-		AudioSessionSetActive(false);
+//		AudioSessionSetActive(false);
 #endif
 
 		[httpHeaders release];

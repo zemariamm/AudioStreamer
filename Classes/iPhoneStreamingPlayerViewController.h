@@ -23,23 +23,36 @@
 
 #import <UIKit/UIKit.h>
 
+
+#define k5Minutes (60.0*5)
 @class AudioStreamer;
 
 @interface iPhoneStreamingPlayerViewController : UIViewController
 {
 	IBOutlet UITextField *downloadSourceField;
+    IBOutlet UITextField *downloadSourceField2;
+    IBOutlet UITextField *downloadSourceField3;
+    IBOutlet UITextField *downloadSourceField4;
+    int cIndex;
 	IBOutlet UIButton *button;
 	IBOutlet UIView *volumeSlider;
 	IBOutlet UILabel *positionLabel;
 	IBOutlet UISlider *progressSlider;
 	AudioStreamer *streamer;
 	NSTimer *progressUpdateTimer;
+    __block UIBackgroundTaskIdentifier bgTask ;
+    NSTimer *updateLongTask;
 }
+
+- (void) turnOnLongTaskTimer:(id) sender;
+- (void) turnOffLongTaskTimer;
+- (void): refreshTask: (id) sender;
 
 - (IBAction)buttonPressed:(id)sender;
 - (void)spinButton;
 - (void)updateProgress:(NSTimer *)aNotification;
 - (IBAction)sliderMoved:(UISlider *)aSlider;
+- (void)playbackStateChanged:(NSNotification *)aNotification;
 
 @end
 

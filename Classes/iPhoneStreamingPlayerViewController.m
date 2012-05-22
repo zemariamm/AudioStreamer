@@ -93,11 +93,21 @@
 	}
 
 	[self destroyStreamer];
+    NSString *urlToPlay =downloadSourceField.text;
+    if (cIndex == 1)
+        urlToPlay = downloadSourceField2.text;
+    else if (cIndex == 2)
+        urlToPlay = downloadSourceField3.text;
+    else if (cIndex == 3)
+        urlToPlay = downloadSourceField4.text;
+    else {
+        urlToPlay =downloadSourceField.text;
+    }
 	
 	NSString *escapedValue =
 		[(NSString *)CFURLCreateStringByAddingPercentEscapes(
 			nil,
-			(CFStringRef)downloadSourceField.text,
+			(CFStringRef)urlToPlay,
 			NULL,
 			NULL,
 			kCFStringEncodingUTF8)
@@ -130,14 +140,16 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-	
+    
+    
+    
+	updateLongTask = nil;
 	MPVolumeView *volumeView = [[[MPVolumeView alloc] initWithFrame:volumeSlider.bounds] autorelease];
 	[volumeSlider addSubview:volumeView];
 	[volumeView sizeToFit];
 	
 	[self setButtonImage:[UIImage imageNamed:@"playbutton.png"]];
 }
-
 //
 // spinButton
 //
@@ -186,6 +198,30 @@
 	}
 }
 
+- (void) refreshTask: (id) sender
+{
+    [self turnOffLongTaskTimer];
+    UIApplication  *app = [UIApplication sharedApplication];
+    __block UIBackgroundTaskIdentifier nTask = [app beginBackgroundTaskWithExpirationHandler:^{ 
+              [app endBackgroundTask:nTask]; 
+              nTask=UIBackgroundTaskInvalid;
+          }];
+    if (bgTask != UIBackgroundTaskInvalid)
+        [app endBackgroundTask:bgTask];
+
+    bgTask = nTask;
+
+}
+
+- (void) startPlaying
+{
+    [self createStreamer];
+    [self setButtonImage:[UIImage imageNamed:@"loadingbutton.png"]];
+    bgTask = UIBackgroundTaskInvalid;
+    [self turnOnLongTaskTimer:nil];
+    [streamer start];
+
+}
 //
 // buttonPressed:
 //
@@ -201,17 +237,33 @@
 	if ([button.currentImage isEqual:[UIImage imageNamed:@"playbutton.png"]])
 	{
 		[downloadSourceField resignFirstResponder];
-		
-		[self createStreamer];
-		[self setButtonImage:[UIImage imageNamed:@"loadingbutton.png"]];
-		[streamer start];
+		cIndex = 0;
+        [self startPlaying];
 	}
 	else
 	{
+        [self turnOffLongTaskTimer];
 		[streamer stop];
 	}
 }
 
+- (void) turnOnLongTaskTimer:(id) sender
+{
+    [self refreshTask:nil];
+    updateLongTask = [NSTimer scheduledTimerWithTimeInterval:k5Minutes
+                                     target:self
+                                   selector:@selector(turnOnLongTaskTimer:)
+                                   userInfo:nil
+                                    repeats:NO];
+}
+- (void) turnOffLongTaskTimer
+{
+    if (updateLongTask != nil)
+    {
+        [updateLongTask invalidate];
+        updateLongTask = nil;
+    }
+}
 //
 // sliderMoved:
 //
@@ -247,8 +299,14 @@
 	}
 	else if ([streamer isIdle])
 	{
-		[self destroyStreamer];
-		[self setButtonImage:[UIImage imageNamed:@"playbutton.png"]];
+        cIndex++;
+        if (cIndex >= 4)
+            cIndex = 0;
+        [self destroyStreamer];
+        [self createStreamer];
+        [self startPlaying];
+		//[self destroyStreamer];
+		//[self setButtonImage:[UIImage imageNamed:@"playbutton.png"]];
 	}
 }
 
